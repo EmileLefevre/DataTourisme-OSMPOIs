@@ -6,7 +6,7 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { POIData } from "../../services/interfaces/dataTourismeParserInterface";
 import { styles } from "@/styles/HomeScreen.styles";
 import BottomSheet from "@gorhom/bottom-sheet";
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 export default function HomeScreen() {
@@ -39,21 +39,20 @@ export default function HomeScreen() {
   };
 
   const handleMapClick = () => {
-    // Fermer le BottomSheet si ouvert
     if (sheetIndex !== -1) {
       handleCloseBottomSheet();
     }
   };
 
-  const handleCloseRoute = () => {
+  const handleCloseRoute = useCallback(() => {
     console.log("🗑️ Demande de fermeture de l'itinéraire");
     setShouldRemoveRoute(true);
-  };
+  }, []);
 
-  const handleRouteRemoved = () => {
+  const handleRouteRemoved = useCallback(() => {
     console.log("✅ Itinéraire supprimé");
     setShouldRemoveRoute(false);
-  };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -69,12 +68,12 @@ export default function HomeScreen() {
           dom={{ matchContents: false }}
           centerLng={userLocation.longitude}
           centerLat={userLocation.latitude}
-          //centerLng={1.53347168}
-          //centerLat={49.0754815}
+          //centerLng={1.0872} // Saint-Étienne-du-Rouvray (Campus CESI)
+          //centerLat={49.3850}
           zoom={15}
           enableClustering={true}
-          maxPOIs={10000}
-          radiusKm={10}
+          maxPOIs={100000}
+          radiusKm={2}
           onPOIClick={handlePOIClick}
           onPOIGroupClick={handlePOIGroupClick}
           onMapClick={handleMapClick}

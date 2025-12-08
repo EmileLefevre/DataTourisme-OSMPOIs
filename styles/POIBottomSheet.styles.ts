@@ -75,7 +75,7 @@ export const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 32,
   },
   navigateButton: {
     flex: 1,

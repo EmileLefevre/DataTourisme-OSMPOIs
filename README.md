@@ -61,7 +61,7 @@ Les paramètres de la carte peuvent être modifiés dans `app/(tabs)/index.tsx`:
   zoom={10} // Niveau de zoom initial
   enableClustering={true} // Activer le clustering
   maxPOIs={10000} // Nombre maximum de POI
-  radiusKm={10} // Rayon de recherche en km
+  radiusKm={5} // Rayon de recherche en km
 />
 ```
 

@@ -8,7 +8,6 @@ export async function loadSpecialPOI(): Promise<POIData | null> {
     );
 
     if (!response.ok) {
-      //console.error("❌ Impossible de charger le POI spécial");
       return null;
     }
 

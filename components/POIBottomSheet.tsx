@@ -20,7 +20,7 @@ interface POIBottomSheetProps {
 
 const POIBottomSheet = forwardRef<BottomSheet, POIBottomSheetProps>(
   ({ poi, index, onChange, onClose, onCloseRoute }, ref) => {
-    const snapPoints = useMemo(() => ["25%", "50%", "90%"], []);
+    const snapPoints = useMemo(() => ["35%", "50%", "90%"], []);
     const [showModal, setShowModal] = useState(false);
 
     if (!poi) return null;

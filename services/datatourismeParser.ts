@@ -37,42 +37,43 @@ export function parseDATAtourismeJSON(data: any): POIData {
 
   // Chercher d'autres sources de description possibles
   if (!description || description.trim() === "") {
-    // Chercher dans shortDescription
     if (data["shortDescription"]?.fr?.[0]) {
       description = data["shortDescription"].fr[0];
-    }
-    // Chercher dans reducedMobilityAccess
-    else if (data["reducedMobilityAccess"]?.fr?.[0]) {
+    } else if (data["reducedMobilityAccess"]?.fr?.[0]) {
       description = data["reducedMobilityAccess"].fr[0];
     }
   }
 
   // Nettoyer les descriptions avec des "?" (templates non remplis)
   if (description) {
-    // Étape 1: Remplacer "Itinéraire de randonnée de ? à ?" par une version générique
-    description = description.replace(/[Ii]tinéraire\s+de\s+randonnées?\s+de\s+\?\s+à\s+\?\.?/gi, "Itinéraire de randonnée.");
+    // Remplacer "Itinéraire de randonnée de ? à ?" par une version générique
+    description = description.replace(
+      /[Ii]tinéraire\s+de\s+randonnées?\s+de\s+\?\s+à\s+\?\.?/gi,
+      "Itinéraire de randonnée."
+    );
 
-    // Étape 2: Gérer les cas partiels "de [lieu] à ?" ou "de ? à [lieu]"
-    // Supprimer juste "à ?" à la fin
+    // Gérer les cas partiels "de [lieu] à ?" ou "de ? à [lieu]"
     description = description.replace(/\s+à\s+\?\s*\.?$/gi, ".");
-    // Supprimer juste "de ?" au début d'une phrase
     description = description.replace(/de\s+\?\s+à\s+/gi, "à ");
 
-    // Étape 3: Supprimer d'autres patterns de "?"
+    // Supprimer d'autres patterns de "?"
     description = description.replace(/de\s+\?\s+à\s+\?/gi, "");
     description = description.replace(/from\s+\?\s+to\s+\?/gi, "");
 
-    // Étape 4: Nettoyer les espaces et points multiples
+    // Nettoyer les espaces et points multiples
     description = description.replace(/\s+/g, " ").trim();
     description = description.replace(/\.{2,}/g, ".").trim();
 
-    // Étape 5: Supprimer un point en début
+    // Supprimer un point en début
     if (description.startsWith(".")) {
       description = description.substring(1).trim();
     }
 
-    // Étape 6: Si la description est juste "Itinéraire de randonnée." (inutile), la marquer pour génération
-    if (description === "Itinéraire de randonnée." || description === "Itinéraire de randonnée") {
+    // Si la description est juste "Itinéraire de randonnée." (inutile), la marquer pour génération
+    if (
+      description === "Itinéraire de randonnée." ||
+      description === "Itinéraire de randonnée"
+    ) {
       description = "__GENERATE__";
     }
   }
@@ -111,22 +112,24 @@ export function parseDATAtourismeJSON(data: any): POIData {
     streetAddress: addressData?.["schema:streetAddress"]?.[0] || undefined,
     locality: addressData?.["schema:addressLocality"] || undefined,
     postalCode: addressData?.["schema:postalCode"] || undefined,
-    city: cityData?.["rdfs:label"]?.fr?.[0] ||
-          cityData?.["rdfs:label"]?.en?.[0] ||
-          addressData?.["schema:addressLocality"] ||
-          undefined,
-    department: departmentData?.["rdfs:label"]?.fr?.[0] ||
-                departmentData?.["rdfs:label"]?.en?.[0] ||
-                undefined,
-    region: regionData?.["rdfs:label"]?.fr?.[0] ||
-            regionData?.["rdfs:label"]?.en?.[0] ||
-            undefined,
+    city:
+      cityData?.["rdfs:label"]?.fr?.[0] ||
+      cityData?.["rdfs:label"]?.en?.[0] ||
+      addressData?.["schema:addressLocality"] ||
+      undefined,
+    department:
+      departmentData?.["rdfs:label"]?.fr?.[0] ||
+      departmentData?.["rdfs:label"]?.en?.[0] ||
+      undefined,
+    region:
+      regionData?.["rdfs:label"]?.fr?.[0] ||
+      regionData?.["rdfs:label"]?.en?.[0] ||
+      undefined,
   };
 
   // Extraire le type de parcours
   const tourType = data["hasTourType"]?.[0]?.["rdfs:label"]?.fr?.[0];
 
-  // Extraire les moyens de paiement depuis offers
   const paymentMethods = data["offers"]?.[0]?.["schema:acceptedPaymentMethod"]
     ?.map((payment: any) => payment["rdfs:label"]?.fr?.[0])
     .filter(Boolean);
@@ -134,7 +137,6 @@ export function parseDATAtourismeJSON(data: any): POIData {
   // Extraire la durée (depuis plusieurs sources possibles)
   let duration: string | undefined;
   if (data["trekData"]?.duration) {
-    // La durée est en heures, convertir en format lisible
     const hours = parseFloat(data["trekData"].duration);
     const totalMinutes = Math.round(hours * 60);
     const h = Math.floor(totalMinutes / 60);
@@ -153,14 +155,11 @@ export function parseDATAtourismeJSON(data: any): POIData {
     duration = `${data["duration"]} min`;
   }
 
-  // Extraire la distance (depuis plusieurs sources possibles)
   let distance: string | undefined;
-  // Priorité à trekData si disponible
   if (data["trekData"]?.distance) {
     const dist = parseFloat(data["trekData"].distance);
-    distance = dist >= 1000
-      ? `${(dist / 1000).toFixed(1)} km`
-      : `${dist.toFixed(0)} m`;
+    distance =
+      dist >= 1000 ? `${(dist / 1000).toFixed(1)} km` : `${dist.toFixed(0)} m`;
   } else if (data["trekData"]?.distanceKm) {
     distance = `${parseFloat(data["trekData"].distanceKm).toFixed(1)} km`;
   } else if (data["tourDistance"]) {
@@ -170,7 +169,6 @@ export function parseDATAtourismeJSON(data: any): POIData {
     }
   }
 
-  // Créer l'objet POI
   const poi: POIData = {
     id: data["@id"] || "",
     name,
@@ -187,50 +185,5 @@ export function parseDATAtourismeJSON(data: any): POIData {
     paymentMethods,
     rawData: data,
   };
-
-  // Générer une description si elle est vide ou générique
-  if (!poi.description || poi.description === "__GENERATE__") {
-    const parts: string[] = [];
-
-    // Détecter si c'est un trek/randonnée
-    const isTrek = poi.type.includes("Trek") || poi.type.includes("Trail") ||
-                   poi.type.includes("WalkingTour") || poi.type.includes("CyclingTour");
-
-    if (isTrek) {
-      parts.push("Parcours de randonnée");
-    }
-
-    // Ajouter la distance
-    if (poi.distance) {
-      parts.push(`de ${poi.distance}`);
-    }
-
-    // Ajouter la durée
-    if (poi.duration) {
-      if (parts.length > 1) {
-        parts.push(`sur une durée d'environ ${poi.duration}`);
-      } else {
-        parts.push(`d'une durée d'environ ${poi.duration}`);
-      }
-    }
-
-    // Ajouter la ville si disponible
-    if (poi.address?.city && poi.address.city !== "France") {
-      parts.push(`à ${poi.address.city}`);
-    }
-
-    // Ajouter le type de parcours si disponible
-    if (poi.tourType) {
-      parts.push(`(${poi.tourType})`);
-    }
-
-    // Construire la description
-    if (parts.length > 0) {
-      poi.description = parts.join(" ") + ".";
-    } else {
-      poi.description = "";
-    }
-  }
-
   return poi;
 }

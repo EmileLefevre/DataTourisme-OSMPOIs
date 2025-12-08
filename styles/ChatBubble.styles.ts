@@ -4,7 +4,7 @@ import { COLORS } from "./colors";
 export const styles = StyleSheet.create({
   chatBubble: {
     position: "absolute",
-    bottom: 20,
+    top: 60,
     right: 20,
     width: 60,
     height: 60,

@@ -1,4 +1,8 @@
-import { clearMessages, loadMessages, saveMessage } from "@/services/chatService";
+import {
+  clearMessages,
+  loadMessages,
+  saveMessage,
+} from "@/services/chatService";
 import { styles } from "@/styles/ChatBubble.styles";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -34,7 +38,6 @@ export default function ChatBubble() {
     };
     loadInitialMessages();
 
-    // Écouter les événements du clavier
     const keyboardWillShow = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {

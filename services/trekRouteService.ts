@@ -53,7 +53,6 @@ function extractRouteCoordinates(poi: POIData): [number, number][] | null {
       }
     }
     if (rawData.trekData) {
-      console.log("📦 Contenu de trekData:", rawData.trekData);
       if (rawData.trekData.coordinates) {
         return rawData.trekData.coordinates;
       }
@@ -203,16 +202,13 @@ export function removeTrekRoute(map: maplibregl.Map) {
   if (map.getLayer(TREK_ROUTE_LAYER_ID)) {
     map.removeLayer(TREK_ROUTE_LAYER_ID);
   }
-
   if (map.getSource(TREK_ROUTE_SOURCE_ID)) {
     map.removeSource(TREK_ROUTE_SOURCE_ID);
   }
-
   if ((map as any)._trekStartMarker) {
     (map as any)._trekStartMarker.remove();
     delete (map as any)._trekStartMarker;
   }
-
   if ((map as any)._trekEndMarker) {
     (map as any)._trekEndMarker.remove();
     delete (map as any)._trekEndMarker;
