@@ -5,6 +5,7 @@ import {
   updateClusterData,
 } from "@/services/clusteringService";
 import { POIData } from "../services/interfaces/dataTourismeParserInterface";
+import { MapLibreDOMProps } from "../services/interfaces/DOMInterface";
 import { getPOIStats, loadPOIsInRadius } from "@/services/poiService";
 import {
   addSearchMarker,
@@ -22,21 +23,6 @@ import "@/styles/SearchMarkerButton.css";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-
-interface MapLibreDOMProps {
-  dom?: any;
-  zoom: number;
-  centerLng?: number;
-  centerLat?: number;
-  enableClustering?: boolean;
-  maxPOIs?: number;
-  radiusKm?: number;
-  onPOIClick?: (poi: POIData) => void;
-  onPOIGroupClick?: (pois: POIData[]) => void;
-  onMapClick?: () => void;
-  shouldRemoveRoute?: boolean;
-  onRouteRemoved?: () => void;
-}
 
 export default function MapLibreDOM({
   dom,

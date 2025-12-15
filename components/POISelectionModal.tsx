@@ -1,20 +1,8 @@
-import { POIData } from "@/services/datatourismeParser";
+import { POIData } from "../services/interfaces/dataTourismeParserInterface";
+import { POISelectionModalProps } from "../services/interfaces/modaleInterface";
 import { styles } from "@/styles/POISelectionModal.styles";
 import React from "react";
-import {
-  FlatList,
-  Modal,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-
-interface POISelectionModalProps {
-  pois: POIData[];
-  visible: boolean;
-  onSelect: (poi: POIData) => void;
-  onClose: () => void;
-}
+import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native";
 
 export default function POISelectionModal({
   pois,

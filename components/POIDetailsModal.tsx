@@ -1,4 +1,4 @@
-import { POIData } from "@/services/interfaces/dataTourismeParserInterface";
+import { POIDetailsModalProps } from "@/services/interfaces/modaleInterface";
 import { extractPhotoURLs } from "@/services/specialPOIService";
 import { styles } from "@/styles/POIDetailsModal.styles";
 import React, { useState } from "react";
@@ -17,12 +17,6 @@ import {
 } from "react-native";
 
 const WINDOW_WIDTH = Dimensions.get("window").width;
-
-interface POIDetailsModalProps {
-  poi: POIData;
-  onClose: () => void;
-  onNavigate?: () => void;
-}
 
 export default function POIDetailsModal({
   poi,

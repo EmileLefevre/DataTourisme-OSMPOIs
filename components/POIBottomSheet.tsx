@@ -1,4 +1,4 @@
-import { POIData } from "../services/interfaces/dataTourismeParserInterface";
+import { POIBottomSheetProps } from "../services/interfaces/bottomSheetInterface";
 import { extractPhotoURLs } from "@/services/specialPOIService";
 import {
   startNavigation,
@@ -9,14 +9,6 @@ import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useMemo, useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import POIDetailsModal from "./POIDetailsModal";
-
-interface POIBottomSheetProps {
-  poi: POIData | null;
-  index?: number;
-  onChange?: (index: number) => void;
-  onClose: () => void;
-  onCloseRoute?: () => void;
-}
 
 const POIBottomSheet = forwardRef<BottomSheet, POIBottomSheetProps>(
   ({ poi, index, onChange, onClose, onCloseRoute }, ref) => {

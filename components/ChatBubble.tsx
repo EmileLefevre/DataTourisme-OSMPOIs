@@ -4,6 +4,7 @@ import {
   saveMessage,
 } from "@/services/chatService";
 import { styles } from "@/styles/ChatBubble.styles";
+import { Message } from "../services/interfaces/chatInterface";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
@@ -17,12 +18,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-interface Message {
-  id: string;
-  text: string;
-  timestamp: number;
-}
 
 export default function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
