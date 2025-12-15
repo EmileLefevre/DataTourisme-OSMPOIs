@@ -1,277 +1,300 @@
 import * as MTP from "@dvt3d/maplibre-three-plugin";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { navigateToPOI, updateMovement } from "./navigationService";
+import { navigationService } from "./navigationService";
 import { Model3DOptions } from "./interfaces/threeboxServiceInterface";
 
-let model: THREE.Object3D | null = null;
-let rtcGroup: THREE.Group | null = null;
-let mixer: THREE.AnimationMixer | null = null;
-let walkAction: THREE.AnimationAction | null = null;
-let idleAction: THREE.AnimationAction | null = null;
-let modelPosition: [number, number] = [0, 0];
-let mapInstance: any = null;
-let mapScene: any = null;
-let isMoving = false;
-let followMode = true;
-let onArrivalCallback: (() => void) | null = null;
-const createRTCGroup = (center: [number, number]) =>
-  (MTP.Creator as any).createRTCGroup(center);
-const MODEL_OFFSET_X = -2.6;
-const MODEL_OFFSET_Y = 0;
-const MODEL_OFFSET_Z = 0;
-const BASE_MODEL_SIZE = 9;
-const REFERENCE_ZOOM = 18;
+export class ThreebodDOM {
+  private model: THREE.Object3D | null = null;
+  private rtcGroup: THREE.Group | null = null;
+  private mixer: THREE.AnimationMixer | null = null;
+  private walkAction: THREE.AnimationAction | null = null;
+  private idleAction: THREE.AnimationAction | null = null;
+  private modelPosition: [number, number] = [0, 0];
+  private mapInstance: any = null;
+  private mapScene: any = null;
+  private isMoving = false;
+  private followMode = true;
+  private onArrivalCallback: (() => void) | null = null;
+  createRTCGroup = (center: [number, number]) =>
+    (MTP.Creator as any).createRTCGroup(center);
+  MODEL_OFFSET_X = -2.6;
+  MODEL_OFFSET_Y = 0;
+  MODEL_OFFSET_Z = 0;
+  BASE_MODEL_SIZE = 9;
+  REFERENCE_ZOOM = 18;
 
-export function createThreeScene(map: any, modelOptions: Model3DOptions) {
-  mapInstance = map;
+  createThreeScene(map: any, modelOptions: Model3DOptions) {
+    this.mapInstance = map;
 
-  // Créer la scène 3D MapLibre-Three
-  mapScene = new MTP.MapScene(map);
+    // Créer la scène 3D MapLibre-Three
+    this.mapScene = new MTP.MapScene(map);
 
-  // Ajouter les lumières
-  const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
-  mapScene.addLight(ambientLight);
+    // Ajouter les lumières
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+    this.mapScene.addLight(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(10, -10, 10).normalize();
-  mapScene.addLight(directionalLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, -10, 10).normalize();
+    this.mapScene.addLight(directionalLight);
 
-  // Sauvegarder la position initiale
-  modelPosition = [modelOptions.lng, modelOptions.lat];
+    // Sauvegarder la position initiale
+    this.modelPosition = [modelOptions.lng, modelOptions.lat];
 
-  // Charger le modèle GLTF
-  const loader = new GLTFLoader();
+    // Charger le modèle GLTF
+    const loader = new GLTFLoader();
 
-  // Fonction pour calculer l'échelle selon le zoom
-  const calculateModelScale = () => {
-    const currentZoom = map.getZoom();
-    const zoomFactor = Math.pow(2, REFERENCE_ZOOM - currentZoom);
-    return BASE_MODEL_SIZE * zoomFactor;
-  };
+    // Fonction pour calculer l'échelle selon le zoom
+    const calculateModelScale = () => {
+      const currentZoom = map.getZoom();
+      const zoomFactor = Math.pow(2, this.REFERENCE_ZOOM - currentZoom);
+      return this.BASE_MODEL_SIZE * zoomFactor;
+    };
 
-  // Fonction pour mettre à jour l'échelle
-  const updateModelScale = () => {
-    if (model && rtcGroup) {
-      const newScale = calculateModelScale();
-      mapScene.removeObject(rtcGroup);
-      model.scale.set(newScale, newScale, newScale);
-      model.position.set(MODEL_OFFSET_X, MODEL_OFFSET_Y, MODEL_OFFSET_Z);
-      rtcGroup.add(model);
-      mapScene.addObject(rtcGroup);
-    }
-  };
-
-  loader.load(
-    modelOptions.modelPath,
-    (gltf) => {
-      model = gltf.scene;
-
-      // Échelle initiale calculée selon le zoom
-      const initialScale = calculateModelScale();
-      model.scale.set(initialScale, initialScale, initialScale);
-      model.position.set(MODEL_OFFSET_X, MODEL_OFFSET_Y, MODEL_OFFSET_Z);
-      console.log(`Échelle initiale: ${initialScale} (zoom: ${map.getZoom()})`);
-
-      // Écouter les changements de zoom
-      map.on("zoom", updateModelScale);
-
-      // Créer un groupe RTC
-      rtcGroup = createRTCGroup(modelPosition);
-      if (!rtcGroup) return;
-      rtcGroup.add(model);
-      mapScene.addObject(rtcGroup);
-
-      // Configuration des animations
-      if (gltf.animations && gltf.animations.length > 0) {
-        mixer = new THREE.AnimationMixer(model);
-
-        // Trouver l'animation de marche
-        const walkAnim =
-          gltf.animations.find(
-            (anim) =>
-              anim.name.toLowerCase().includes("walk") ||
-              anim.name.toLowerCase().includes("run")
-          ) || gltf.animations[0];
-
-        // Trouver l'animation d'idle
-        const idleAnim = gltf.animations.find(
-          (anim) =>
-            anim.name.toLowerCase().includes("idle") ||
-            anim.name.toLowerCase().includes("standing")
+    // Fonction pour mettre à jour l'échelle
+    const updateModelScale = () => {
+      if (this.model && this.rtcGroup) {
+        const newScale = calculateModelScale();
+        this.mapScene.removeObject(this.rtcGroup);
+        this.model.scale.set(newScale, newScale, newScale);
+        this.model.position.set(
+          this.MODEL_OFFSET_X,
+          this.MODEL_OFFSET_Y,
+          this.MODEL_OFFSET_Z
         );
+        this.rtcGroup.add(this.model);
+        this.mapScene.addObject(this.rtcGroup);
+      }
+    };
 
-        // Configurer l'animation d'idle (dominante)
-        if (idleAnim) {
-          idleAction = mixer.clipAction(idleAnim);
-          idleAction.setLoop(THREE.LoopRepeat, Infinity);
-          idleAction.setEffectiveWeight(1); // 100% idle
-          idleAction.timeScale = 3; // Accélérer l'animation pour la rendre plus visible
-          idleAction.play();
-          console.log("Animation idle configurée:", idleAnim.name);
-        }
+    loader.load(
+      modelOptions.modelPath,
+      (gltf) => {
+        this.model = gltf.scene;
+
+        // Échelle initiale calculée selon le zoom
+        const initialScale = calculateModelScale();
+        this.model.scale.set(initialScale, initialScale, initialScale);
+        this.model.position.set(
+          this.MODEL_OFFSET_X,
+          this.MODEL_OFFSET_Y,
+          this.MODEL_OFFSET_Z
+        );
         console.log(
-          "Animation de marche configurée (respiration légère):",
-          walkAnim.name
+          `Échelle initiale: ${initialScale} (zoom: ${map.getZoom()})`
         );
+
+        // Écouter les changements de zoom
+        map.on("zoom", updateModelScale);
+
+        // Créer un groupe RTC
+        this.rtcGroup = this.createRTCGroup(this.modelPosition);
+        if (!this.rtcGroup) return;
+        this.rtcGroup.add(this.model);
+        this.mapScene.addObject(this.rtcGroup);
+
+        // Configuration des animations
+        if (gltf.animations && gltf.animations.length > 0) {
+          this.mixer = new THREE.AnimationMixer(this.model);
+
+          // Trouver l'animation de marche
+          const walkAnim =
+            gltf.animations.find(
+              (anim) =>
+                anim.name.toLowerCase().includes("walk") ||
+                anim.name.toLowerCase().includes("run")
+            ) || gltf.animations[0];
+
+          // Trouver l'animation d'idle
+          const idleAnim = gltf.animations.find(
+            (anim) =>
+              anim.name.toLowerCase().includes("idle") ||
+              anim.name.toLowerCase().includes("standing")
+          );
+
+          // Configurer l'animation d'idle (dominante)
+          if (idleAnim) {
+            this.idleAction = this.mixer.clipAction(idleAnim);
+            this.idleAction.setLoop(THREE.LoopRepeat, Infinity);
+            this.idleAction.setEffectiveWeight(1); // 100% idle
+            this.idleAction.timeScale = 3; // Accélérer l'animation pour la rendre plus visible
+            this.idleAction.play();
+            console.log("Animation idle configurée:", idleAnim.name);
+          }
+          console.log(
+            "Animation de marche configurée (respiration légère):",
+            walkAnim.name
+          );
+        }
+
+        // Démarrer la boucle d'animation
+        this.startAnimationLoop();
+      },
+      () => {
+        console.log(`Chargement ...`);
+      },
+      (error) => {
+        console.error("❌ Erreur de chargement:", error);
+      }
+    );
+    return this.mapScene;
+  }
+
+  // Boucle d'animation
+  startAnimationLoop() {
+    let lastUpdateTime = 0;
+    const updateInterval = 50; // 50ms entre chaque mise à jour
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      const currentTime = Date.now();
+
+      // Mettre à jour les animations
+      if (this.mixer) {
+        this.mixer.update(0.016);
       }
 
-      // Démarrer la boucle d'animation
-      startAnimationLoop();
-    },
-    () => {
-      console.log(`Chargement ...`);
-    },
-    (error) => {
-      console.error("❌ Erreur de chargement:", error);
-    }
-  );
-  return mapScene;
-}
+      // Forcer le rafraîchissement de la carte pour voir l'animation
+      if (this.mapInstance && this.mapScene) {
+        this.mapInstance.triggerRepaint();
+      }
 
-// Boucle d'animation
-function startAnimationLoop() {
-  let lastUpdateTime = 0;
-  const updateInterval = 50; // 50ms entre chaque mise à jour
+      // Limiter les mises à jour de position
+      if (currentTime - lastUpdateTime < updateInterval) {
+        return;
+      }
+      lastUpdateTime = currentTime;
 
-  function animate() {
-    requestAnimationFrame(animate);
-    const currentTime = Date.now();
+      // Gestion du déplacement
+      if (this.model && this.rtcGroup && this.isMoving) {
+        const wasMoving = this.isMoving;
 
-    // Mettre à jour les animations
-    if (mixer) {
-      mixer.update(0.016);
-    }
+        const result = navigationService.updateMovement(
+          this.mapInstance,
+          this.modelPosition,
+          this.model,
+          this.walkAction,
+          this.idleAction,
+          this.followMode
+        );
 
-    // Forcer le rafraîchissement de la carte pour voir l'animation
-    if (mapInstance && mapScene) {
-      mapInstance.triggerRepaint();
-    }
+        this.modelPosition = result.modelPosition;
+        this.isMoving = result.isMoving;
 
-    // Limiter les mises à jour de position
-    if (currentTime - lastUpdateTime < updateInterval) {
+        // Si le personnage vient de s'arrêter (arrivé à destination)
+        if (wasMoving && !this.isMoving && this.onArrivalCallback) {
+          this.onArrivalCallback();
+        }
+
+        // Mettre à jour la position géographique du modèle
+        this.model.position.set(
+          this.MODEL_OFFSET_X,
+          this.MODEL_OFFSET_Y,
+          this.MODEL_OFFSET_Z
+        );
+        this.mapScene.removeObject(this.rtcGroup);
+        this.rtcGroup = this.createRTCGroup(this.modelPosition);
+        if (!this.rtcGroup) return;
+        this.rtcGroup.add(this.model);
+        this.mapScene.addObject(this.rtcGroup);
+      }
+    };
+
+    animate();
+  }
+
+  // Fonction publique pour déclencher la navigation
+  async startNavigation(
+    lng: number,
+    lat: number,
+    shouldFollow: boolean = true
+  ) {
+    if (!this.mapInstance || !this.model) {
+      console.error("[NAV] Carte ou modèle non initialisés");
       return;
     }
-    lastUpdateTime = currentTime;
 
-    // Gestion du déplacement
-    if (model && rtcGroup && isMoving) {
-      const wasMoving = isMoving;
+    console.log("[NAV] Démarrage de la navigation vers:", lng, lat);
 
-      const result = updateMovement(
-        mapInstance,
-        modelPosition,
-        model,
-        walkAction,
-        idleAction,
-        followMode
-      );
+    const result = await navigationService.navigateToPOI(
+      this.mapInstance,
+      this.modelPosition,
+      lng,
+      lat
+    );
+    this.isMoving = result.isMoving;
+    this.followMode = shouldFollow;
+  }
 
-      modelPosition = result.modelPosition;
-      isMoving = result.isMoving;
+  // Fonction publique pour mettre à jour le follow mode
+  setFollowMode(follow: boolean) {
+    this.followMode = follow;
+  }
 
-      // Si le personnage vient de s'arrêter (arrivé à destination)
-      if (wasMoving && !isMoving && onArrivalCallback) {
-        onArrivalCallback();
-      }
+  // Fonction publique pour obtenir l'état du follow mode
+  getFollowMode(): boolean {
+    return this.followMode;
+  }
 
-      // Mettre à jour la position géographique du modèle
-      model.position.set(MODEL_OFFSET_X, MODEL_OFFSET_Y, MODEL_OFFSET_Z);
-      mapScene.removeObject(rtcGroup);
-      rtcGroup = createRTCGroup(modelPosition);
-      if (!rtcGroup) return;
-      rtcGroup.add(model);
-      mapScene.addObject(rtcGroup);
+  // Fonction publique pour obtenir la position actuelle du modèle
+  getModelPosition(): [number, number] {
+    return [...this.modelPosition];
+  }
+
+  // Fonction publique pour définir le callback d'arrivée
+  setOnArrivalCallback(callback: (() => void) | null) {
+    this.onArrivalCallback = callback;
+    console.log("[NAV] Callback d'arrivée défini:", !!callback);
+  }
+
+  // Fonction publique pour arrêter la navigation
+  stopNavigation() {
+    if (!this.mapInstance) {
+      console.error("[NAV] Carte non initialisée");
+      return;
+    }
+
+    this.isMoving = false;
+
+    // Arrêter l'animation de marche
+    if (this.walkAction) {
+      this.walkAction.setEffectiveWeight(0);
+    }
+
+    // Activer l'animation idle
+    if (this.idleAction) {
+      this.idleAction.setEffectiveWeight(1);
+    }
+
+    // Supprimer la route de la carte
+    if (this.mapInstance.getSource("route")) {
+      this.mapInstance.removeLayer("route");
+      this.mapInstance.removeSource("route");
     }
   }
 
-  animate();
-}
-
-// Fonction publique pour déclencher la navigation
-export async function startNavigation(
-  lng: number,
-  lat: number,
-  shouldFollow: boolean = true
-) {
-  if (!mapInstance || !model) {
-    console.error("[NAV] Carte ou modèle non initialisés");
-    return;
-  }
-
-  console.log("[NAV] Démarrage de la navigation vers:", lng, lat);
-
-  const result = await navigateToPOI(mapInstance, modelPosition, lng, lat);
-  isMoving = result.isMoving;
-  followMode = shouldFollow;
-}
-
-// Fonction publique pour mettre à jour le follow mode
-export function setFollowMode(follow: boolean) {
-  followMode = follow;
-}
-
-// Fonction publique pour obtenir l'état du follow mode
-export function getFollowMode(): boolean {
-  return followMode;
-}
-
-// Fonction publique pour obtenir la position actuelle du modèle
-export function getModelPosition(): [number, number] {
-  return [...modelPosition];
-}
-
-// Fonction publique pour définir le callback d'arrivée
-export function setOnArrivalCallback(callback: (() => void) | null) {
-  onArrivalCallback = callback;
-  console.log("[NAV] Callback d'arrivée défini:", !!callback);
-}
-
-// Fonction publique pour arrêter la navigation
-export function stopNavigation() {
-  if (!mapInstance) {
-    console.error("[NAV] Carte non initialisée");
-    return;
-  }
-
-  isMoving = false;
-
-  // Arrêter l'animation de marche
-  if (walkAction) {
-    walkAction.setEffectiveWeight(0);
-  }
-
-  // Activer l'animation idle
-  if (idleAction) {
-    idleAction.setEffectiveWeight(1);
-  }
-
-  // Supprimer la route de la carte
-  if (mapInstance.getSource("route")) {
-    mapInstance.removeLayer("route");
-    mapInstance.removeSource("route");
+  // Crée une scène avec le modèle Soldier
+  createSoldierScene(
+    map: any,
+    lng: number,
+    lat: number,
+    options?: Partial<Model3DOptions>
+  ) {
+    return this.createThreeScene(map, {
+      modelPath: "https://threejs.org/examples/models/gltf/Soldier.glb",
+      lng,
+      lat,
+      altitude: options?.altitude || 0,
+      baseScale: options?.baseScale || 5,
+      fixedSize: options?.fixedSize !== undefined ? options.fixedSize : true,
+      billboardRotation:
+        options?.billboardRotation !== undefined
+          ? options.billboardRotation
+          : false,
+      rotation: options?.rotation || { x: 90, y: 180, z: 0 },
+      animated: options?.animated !== undefined ? options.animated : true,
+    });
   }
 }
 
-// Crée une scène avec le modèle Soldier
-export function createSoldierScene(
-  map: any,
-  lng: number,
-  lat: number,
-  options?: Partial<Model3DOptions>
-) {
-  return createThreeScene(map, {
-    modelPath: "https://threejs.org/examples/models/gltf/Soldier.glb",
-    lng,
-    lat,
-    altitude: options?.altitude || 0,
-    baseScale: options?.baseScale || 5,
-    fixedSize: options?.fixedSize !== undefined ? options.fixedSize : true,
-    billboardRotation:
-      options?.billboardRotation !== undefined
-        ? options.billboardRotation
-        : false,
-    rotation: options?.rotation || { x: 90, y: 180, z: 0 },
-    animated: options?.animated !== undefined ? options.animated : true,
-  });
-}
+export const model3DService = new ThreebodDOM();

@@ -2,44 +2,11 @@ import { parseDATAtourismeJSON } from "./datatourismeParser";
 import { POIData } from "./interfaces/dataTourismeParserInterface";
 import { POIIndexEntry, POIIndex } from "./interfaces/poiServiceInterface";
 import { haversine } from "./utils/haversine";
-
-let poiIndexCache: POIIndex | null = null;
-let indexLoadingPromise: Promise<POIIndex> | null = null;
+import { poiCache } from "./cache/poiCache";
 
 async function loadPOIIndex(): Promise<POIIndex> {
-  if (poiIndexCache) {
-    return poiIndexCache;
-  }
-
-  if (indexLoadingPromise) {
-    return indexLoadingPromise;
-  }
-
-  indexLoadingPromise = (async () => {
-    try {
-      const response = await fetch("/POIs/poi-index.json");
-
-      if (!response.ok) {
-        throw new Error("Failed to load POI index");
-      }
-
-      poiIndexCache = await response.json();
-      console.log(`📦 Index chargé: ${poiIndexCache!.totalCount} POIs`);
-      return poiIndexCache!;
-    } catch (error) {
-      console.error("❌ Error loading POI index:", error);
-      indexLoadingPromise = null;
-      return { pois: [], totalCount: 0, generatedAt: new Date().toISOString() };
-    }
-  })();
-
-  return indexLoadingPromise;
+  return poiCache.getIndex();
 }
-
-// Démarrer le chargement de l'index dès l'import du module
-loadPOIIndex().catch((error) => {
-  console.error("❌ Erreur préchargement:", error);
-});
 
 // Filtre les POIs dans un rayon (en km) autour d'un point
 function filterPOIsInRadius(

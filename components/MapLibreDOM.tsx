@@ -12,7 +12,7 @@ import {
   removeSearchMarker,
   SEARCH_MARKER_RADIUS_KM,
 } from "@/services/searchMarkerService";
-import { createSoldierScene } from "@/services/threeboxServiceDOM";
+import { model3DService } from "@/services/threeboxServiceDOM";
 import {
   displayTrekRoute,
   isTrek,
@@ -152,10 +152,15 @@ export default function MapLibreDOM({
           `Position du modele 3D : lng=${centerLng}, lat=${centerLat}`
         );
 
-        createSoldierScene(mapInstance.current, centerLng, centerLat, {
-          altitude: 0,
-          animated: true,
-        });
+        model3DService.createSoldierScene(
+          mapInstance.current,
+          centerLng,
+          centerLat,
+          {
+            altitude: 0,
+            animated: true,
+          }
+        );
       } catch (error) {
         console.error("Erreur lors de la création de la scène 3D:", error);
       }
