@@ -1,4 +1,5 @@
 import maplibregl from "maplibre-gl";
+import { TREK_CONFIG } from "@/constants/trek";
 import { POIData } from "./interfaces/dataTourismeParserInterface";
 
 const TREK_ROUTE_SOURCE_ID = "trek-route-source";
@@ -140,7 +141,10 @@ export function displayTrekRoute(
     }
   }
 
-  const routeColor = poi.source === "hiking" ? "#8e44ad" : "#1e90ff";
+  const routeColor =
+    poi.source === "hiking"
+      ? TREK_CONFIG.ROUTE.COLORS.VIOLET
+      : TREK_CONFIG.ROUTE.COLORS.BLUE;
   map.addLayer(
     {
       id: TREK_ROUTE_LAYER_ID,
@@ -152,8 +156,8 @@ export function displayTrekRoute(
       },
       paint: {
         "line-color": routeColor,
-        "line-width": 4,
-        "line-opacity": 0.8,
+        "line-width": TREK_CONFIG.ROUTE.LINE_STYLE.WIDTH,
+        "line-opacity": TREK_CONFIG.ROUTE.LINE_STYLE.OPACITY,
       },
     },
     beforeLayerId
@@ -162,15 +166,15 @@ export function displayTrekRoute(
   const startCoord = routeCoords[0];
   const endCoord = routeCoords[routeCoords.length - 1];
   const startMarker = new maplibregl.Marker({
-    color: "#22c55e",
-    scale: 0.8,
+    color: TREK_CONFIG.MARKERS.START.COLOR,
+    scale: TREK_CONFIG.MARKERS.SCALE,
   })
     .setLngLat(startCoord)
     .addTo(map);
 
   const endMarker = new maplibregl.Marker({
-    color: "#ef4444",
-    scale: 0.8,
+    color: TREK_CONFIG.MARKERS.END.COLOR,
+    scale: TREK_CONFIG.MARKERS.SCALE,
   })
     .setLngLat(endCoord)
     .addTo(map);

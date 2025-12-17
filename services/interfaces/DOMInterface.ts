@@ -2,7 +2,6 @@ import { POIData } from "./dataTourismeParserInterface";
 
 export interface MapLibreDOMProps {
   dom?: any;
-  zoom: number;
   centerLng?: number;
   centerLat?: number;
   enableClustering?: boolean;

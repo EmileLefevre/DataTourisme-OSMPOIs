@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { navigationService } from "./navigationService";
 import { Model3DOptions } from "./interfaces/threeboxServiceInterface";
+import { MODEL_3D_CONFIG } from "../constants/model3d";
 
 export class ThreebodDOM {
   private model: THREE.Object3D | null = null;
@@ -18,11 +19,6 @@ export class ThreebodDOM {
   private onArrivalCallback: (() => void) | null = null;
   createRTCGroup = (center: [number, number]) =>
     (MTP.Creator as any).createRTCGroup(center);
-  MODEL_OFFSET_X = -2.6;
-  MODEL_OFFSET_Y = 0;
-  MODEL_OFFSET_Z = 0;
-  BASE_MODEL_SIZE = 9;
-  REFERENCE_ZOOM = 18;
 
   createThreeScene(map: any, modelOptions: Model3DOptions) {
     this.mapInstance = map;
@@ -47,8 +43,11 @@ export class ThreebodDOM {
     // Fonction pour calculer l'échelle selon le zoom
     const calculateModelScale = () => {
       const currentZoom = map.getZoom();
-      const zoomFactor = Math.pow(2, this.REFERENCE_ZOOM - currentZoom);
-      return this.BASE_MODEL_SIZE * zoomFactor;
+      const zoomFactor = Math.pow(
+        2,
+        MODEL_3D_CONFIG.REFERENCE_ZOOM - currentZoom
+      );
+      return MODEL_3D_CONFIG.BASE_MODEL_SIZE * zoomFactor;
     };
 
     // Fonction pour mettre à jour l'échelle
@@ -58,9 +57,9 @@ export class ThreebodDOM {
         this.mapScene.removeObject(this.rtcGroup);
         this.model.scale.set(newScale, newScale, newScale);
         this.model.position.set(
-          this.MODEL_OFFSET_X,
-          this.MODEL_OFFSET_Y,
-          this.MODEL_OFFSET_Z
+          MODEL_3D_CONFIG.OFFSET.X,
+          MODEL_3D_CONFIG.OFFSET.Y,
+          MODEL_3D_CONFIG.OFFSET.Z
         );
         this.rtcGroup.add(this.model);
         this.mapScene.addObject(this.rtcGroup);
@@ -76,9 +75,9 @@ export class ThreebodDOM {
         const initialScale = calculateModelScale();
         this.model.scale.set(initialScale, initialScale, initialScale);
         this.model.position.set(
-          this.MODEL_OFFSET_X,
-          this.MODEL_OFFSET_Y,
-          this.MODEL_OFFSET_Z
+          MODEL_3D_CONFIG.OFFSET.X,
+          MODEL_3D_CONFIG.OFFSET.Y,
+          MODEL_3D_CONFIG.OFFSET.Z
         );
         console.log(
           `Échelle initiale: ${initialScale} (zoom: ${map.getZoom()})`
@@ -143,7 +142,6 @@ export class ThreebodDOM {
   // Boucle d'animation
   startAnimationLoop() {
     let lastUpdateTime = 0;
-    const updateInterval = 50; // 50ms entre chaque mise à jour
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -151,7 +149,7 @@ export class ThreebodDOM {
 
       // Mettre à jour les animations
       if (this.mixer) {
-        this.mixer.update(0.016);
+        this.mixer.update(MODEL_3D_CONFIG.ANIMATION.MIXER_UPDATE_DELTA);
       }
 
       // Forcer le rafraîchissement de la carte pour voir l'animation
@@ -160,7 +158,10 @@ export class ThreebodDOM {
       }
 
       // Limiter les mises à jour de position
-      if (currentTime - lastUpdateTime < updateInterval) {
+      if (
+        currentTime - lastUpdateTime <
+        MODEL_3D_CONFIG.ANIMATION.UPDATE_INTERVAL_MS
+      ) {
         return;
       }
       lastUpdateTime = currentTime;
@@ -188,9 +189,9 @@ export class ThreebodDOM {
 
         // Mettre à jour la position géographique du modèle
         this.model.position.set(
-          this.MODEL_OFFSET_X,
-          this.MODEL_OFFSET_Y,
-          this.MODEL_OFFSET_Z
+          MODEL_3D_CONFIG.OFFSET.X,
+          MODEL_3D_CONFIG.OFFSET.Y,
+          MODEL_3D_CONFIG.OFFSET.Z
         );
         this.mapScene.removeObject(this.rtcGroup);
         this.rtcGroup = this.createRTCGroup(this.modelPosition);

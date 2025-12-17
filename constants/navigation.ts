@@ -1,0 +1,12 @@
+export const NAVIGATION_CONFIG = {
+  MOVEMENT: {
+    SPEED: 0.00002,
+    ARRIVAL_DISTANCE_THRESHOLD: 0.00001,
+  },
+  ROTATION: {
+    BEARING_SMOOTHING_FACTOR: 0.3,
+  },
+  ANIMATION: {
+    WALK_SPEED: 1.2,
+  },
+} as const;

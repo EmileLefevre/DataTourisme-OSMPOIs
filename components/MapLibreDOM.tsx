@@ -18,6 +18,7 @@ import {
   isTrek,
   removeTrekRoute,
 } from "@/services/trekRouteService";
+import { MAP_CONFIG } from "../constants/map";
 import "@/styles/MapLibreDOM.css";
 import "@/styles/SearchMarkerButton.css";
 import maplibregl from "maplibre-gl";
@@ -26,7 +27,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 export default function MapLibreDOM({
   dom,
-  zoom,
   centerLng = 0.72816397,
   centerLat = 49.524509,
   enableClustering = false,
@@ -130,11 +130,11 @@ export default function MapLibreDOM({
 
     mapInstance.current = new maplibregl.Map({
       container: mapRef.current!,
-      style: "https://tiles.openfreemap.org/styles/liberty",
+      style: MAP_CONFIG.STYLE.URL,
       center: [centerLng, centerLat],
-      zoom: 17,
-      pitch: 60,
-      attributionControl: false,
+      zoom: MAP_CONFIG.DEFAULT.ZOOM,
+      pitch: MAP_CONFIG.DEFAULT.PITCH,
+      attributionControl: MAP_CONFIG.DEFAULT.ATTRIBUTION_CONTROL,
     });
 
     mapInstance.current.on("load", () => {
@@ -168,7 +168,8 @@ export default function MapLibreDOM({
       const updateBuildingsVisibility = () => {
         const currentZoom = map.getZoom();
         const layers = map.getStyle().layers;
-        const shouldHideBuildings = currentZoom >= 18;
+        const shouldHideBuildings =
+          currentZoom >= MAP_CONFIG.BUILDINGS.HIDE_ZOOM_THRESHOLD;
 
         layers.forEach((layer: any) => {
           if (layer.type === "fill-extrusion") {
@@ -214,7 +215,7 @@ export default function MapLibreDOM({
         }
       });
     });
-  }, [centerLng, centerLat, zoom, onMapClick, maxPOIs]);
+  }, [centerLng, centerLat, onMapClick, maxPOIs]);
 
   // useEffect 2 : Initialiser le clustering (RÉACTIF à enableClustering)
   useEffect(() => {

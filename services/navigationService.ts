@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import maplibregl from "maplibre-gl";
+import { NAVIGATION_CONFIG } from "@/constants/navigation";
 
 export class Navigation {
   private routeQueue: [number, number][] = [];
@@ -39,7 +41,7 @@ export class Navigation {
   }
 
   // Afficher la route sur la carte
-  displayRoute(map: any, routeCoordinates: [number, number][]) {
+  displayRoute(map: maplibregl.Map, routeCoordinates: [number, number][]) {
     if (!routeCoordinates || routeCoordinates.length < 2) {
       // Supprimer la route si pas de coordonnées
       if (map.getSource("route")) {
@@ -49,10 +51,9 @@ export class Navigation {
       return;
     }
 
-    // Mettre à jour ou créer la source
-    if (map.getSource("route")) {
-      // Mettre à jour la source existante
-      map.getSource("route").setData({
+    const source = map.getSource("route");
+    if (source) {
+      (source as maplibregl.GeoJSONSource).setData({
         type: "Feature",
         properties: {},
         geometry: {
@@ -105,7 +106,7 @@ export class Navigation {
   }
 
   // Mettre à jour la route restante
-  updateRemainingRoute(map: any, modelPosition: [number, number]) {
+  updateRemainingRoute(map: maplibregl.Map, modelPosition: [number, number]) {
     if (this.fullRoute.length > 0 && this.routeQueue.length > 0) {
       const remainingRoute = [modelPosition, ...this.routeQueue];
       this.displayRoute(map, remainingRoute);
@@ -114,7 +115,7 @@ export class Navigation {
 
   // Naviguer vers un POI
   async navigateToPOI(
-    map: any,
+    map: maplibregl.Map,
     modelPosition: [number, number],
     targetLng: number,
     targetLat: number
@@ -149,7 +150,7 @@ export class Navigation {
   }
 
   // Arrêter le déplacement
-  stopMovement(map: any) {
+  stopMovement(map: maplibregl.Map) {
     this.routeQueue = [];
     this.currentTarget = null;
     this.isMoving = false;
@@ -166,7 +167,7 @@ export class Navigation {
   // Mise à jour du mouvement du modèle
   // Retourne les nouvelles valeurs pour modelPosition, currentBearing, isMoving
   updateMovement(
-    map: any,
+    map: maplibregl.Map,
     modelPosition: [number, number],
     model: THREE.Object3D,
     walkAction: THREE.AnimationAction | null,
@@ -196,12 +197,12 @@ export class Navigation {
     }
 
     if (this.currentTarget) {
-      const speed = 0.00002;
+      const speed = NAVIGATION_CONFIG.MOVEMENT.SPEED;
       const dx = this.currentTarget[0] - modelPosition[0];
       const dy = this.currentTarget[1] - modelPosition[1];
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (distance > 0.00001) {
+      if (distance > NAVIGATION_CONFIG.MOVEMENT.ARRIVAL_DISTANCE_THRESHOLD) {
         // Calculer le déplacement
         const moveX = (dx / distance) * Math.min(speed, distance);
         const moveY = (dy / distance) * Math.min(speed, distance);
@@ -220,7 +221,8 @@ export class Navigation {
         let bearingDiff = targetBearing - this.currentBearing;
         while (bearingDiff > 180) bearingDiff -= 360;
         while (bearingDiff < -180) bearingDiff += 360;
-        this.currentBearing += bearingDiff * 0.3;
+        this.currentBearing +=
+          bearingDiff * NAVIGATION_CONFIG.ROTATION.BEARING_SMOOTHING_FACTOR;
 
         // Rotation du modèle
         model.rotation.y = -directionAngle;
@@ -228,7 +230,9 @@ export class Navigation {
         // Animation de marche
         if (walkAction) {
           walkAction.setEffectiveWeight(1);
-          walkAction.setEffectiveTimeScale(1.2);
+          walkAction.setEffectiveTimeScale(
+            NAVIGATION_CONFIG.ANIMATION.WALK_SPEED
+          );
         }
         if (idleAction) {
           idleAction.setEffectiveWeight(0);
