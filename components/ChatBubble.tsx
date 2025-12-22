@@ -27,7 +27,7 @@ export default function ChatBubble() {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    const loadInitialMessages = async () => {
+    const loadInitialMessages = async (): Promise<void> => {
       const loadedMessages = await loadMessages();
       setMessages(loadedMessages);
     };
@@ -59,7 +59,7 @@ export default function ChatBubble() {
     }
   }, [messages]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (): Promise<void> => {
     if (!inputValue.trim()) return;
 
     const newMessage: Message = {
@@ -68,13 +68,13 @@ export default function ChatBubble() {
       timestamp: Date.now(),
     };
 
-    const updatedMessages = [...messages, newMessage];
+    const updatedMessages: Message[] = [...messages, newMessage];
     setMessages(updatedMessages);
     await saveMessage(newMessage);
     setInputValue("");
   };
 
-  const handleClearMessages = async () => {
+  const handleClearMessages = async (): Promise<void> => {
     await clearMessages();
     setMessages([]);
   };

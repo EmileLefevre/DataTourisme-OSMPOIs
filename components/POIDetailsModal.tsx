@@ -37,7 +37,7 @@ export default function POIDetailsModal({
 
   const handlePhotoScroll = (
     event: NativeSyntheticEvent<NativeScrollEvent>
-  ) => {
+  ): void => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / (WINDOW_WIDTH - 32));
     setCurrentPhotoIndex(index);
@@ -45,14 +45,13 @@ export default function POIDetailsModal({
 
   const getFormattedAddress = () => {
     if (!poi.address) return null;
-
-    const parts: string[] = [];
+    const parts = [];
 
     if (poi.address.streetAddress) {
       parts.push(poi.address.streetAddress);
     }
 
-    const cityParts: string[] = [];
+    const cityParts = [];
     if (poi.address.postalCode) cityParts.push(poi.address.postalCode);
     if (poi.address.city) {
       cityParts.push(poi.address.city);

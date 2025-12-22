@@ -1,9 +1,5 @@
 import { POIBottomSheetProps } from "../services/interfaces/bottomSheetInterface";
 import { extractPhotoURLs } from "@/services/specialPOIService";
-/* import {
-  startNavigation,
-  setFollowMode as setThreeboxFollowMode,
-} from "@/services/threeboxServiceDOM"; */
 import { model3DService } from "@/services/threeboxServiceDOM";
 import { styles } from "@/styles/POIBottomSheet.styles";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
@@ -50,7 +46,7 @@ const POIBottomSheet = forwardRef<BottomSheet, POIBottomSheetProps>(
     const photos = extractPhotoURLs(poi);
     const firstPhoto = photos.length > 0 ? photos[0] : null;
 
-    const handleNavigate = () => {
+    const handleNavigate = (): void => {
       console.log("[POIBottomSheet] Navigation vers:", poi.coordinates);
       model3DService.startNavigation(
         poi.coordinates.lng,

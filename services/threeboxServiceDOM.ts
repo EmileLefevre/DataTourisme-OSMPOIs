@@ -2,8 +2,12 @@ import * as MTP from "@dvt3d/maplibre-three-plugin";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { navigationService } from "./navigationService";
-import { Model3DOptions } from "./interfaces/threeboxServiceInterface";
+import {
+  Model3DOptions,
+  MapScene,
+} from "./interfaces/threeboxServiceInterface";
 import { MODEL_3D_CONFIG } from "../constants/model3d";
+import maplibregl from "maplibre-gl";
 
 export class ThreebodDOM {
   private model: THREE.Object3D | null = null;
@@ -12,15 +16,16 @@ export class ThreebodDOM {
   private walkAction: THREE.AnimationAction | null = null;
   private idleAction: THREE.AnimationAction | null = null;
   private modelPosition: [number, number] = [0, 0];
-  private mapInstance: any = null;
-  private mapScene: any = null;
+  private mapInstance: maplibregl.Map | null = null;
+  private mapScene: MapScene | null = null;
   private isMoving = false;
   private followMode = true;
   private onArrivalCallback: (() => void) | null = null;
   createRTCGroup = (center: [number, number]) =>
-    (MTP.Creator as any).createRTCGroup(center);
+    (MTP.Creator as any).createRTCGroup(center); //pas de type compatible pour RTCG non plus donc any obligatoire
 
-  createThreeScene(map: any, modelOptions: Model3DOptions) {
+  createThreeScene(map: any, modelOptions: Model3DOptions): MapScene {
+    //La librairie MapLibre-Three attend un type incompatible. Donc on doit garder la any
     this.mapInstance = map;
 
     // Créer la scène 3D MapLibre-Three
@@ -41,7 +46,7 @@ export class ThreebodDOM {
     const loader = new GLTFLoader();
 
     // Fonction pour calculer l'échelle selon le zoom
-    const calculateModelScale = () => {
+    const calculateModelScale = (): number => {
       const currentZoom = map.getZoom();
       const zoomFactor = Math.pow(
         2,
@@ -51,8 +56,9 @@ export class ThreebodDOM {
     };
 
     // Fonction pour mettre à jour l'échelle
-    const updateModelScale = () => {
+    const updateModelScale = (): void => {
       if (this.model && this.rtcGroup) {
+        if (!this.mapScene) return;
         const newScale = calculateModelScale();
         this.mapScene.removeObject(this.rtcGroup);
         this.model.scale.set(newScale, newScale, newScale);
@@ -88,7 +94,8 @@ export class ThreebodDOM {
 
         // Créer un groupe RTC
         this.rtcGroup = this.createRTCGroup(this.modelPosition);
-        if (!this.rtcGroup) return;
+        if (!this.rtcGroup) return null;
+        if (!this.mapScene) return null;
         this.rtcGroup.add(this.model);
         this.mapScene.addObject(this.rtcGroup);
 
@@ -140,10 +147,10 @@ export class ThreebodDOM {
   }
 
   // Boucle d'animation
-  startAnimationLoop() {
+  startAnimationLoop(): void {
     let lastUpdateTime = 0;
 
-    const animate = () => {
+    const animate = (): void => {
       requestAnimationFrame(animate);
       const currentTime = Date.now();
 
@@ -169,7 +176,7 @@ export class ThreebodDOM {
       // Gestion du déplacement
       if (this.model && this.rtcGroup && this.isMoving) {
         const wasMoving = this.isMoving;
-
+        if (!this.mapInstance) return;
         const result = navigationService.updateMovement(
           this.mapInstance,
           this.modelPosition,
@@ -193,6 +200,7 @@ export class ThreebodDOM {
           MODEL_3D_CONFIG.OFFSET.Y,
           MODEL_3D_CONFIG.OFFSET.Z
         );
+        if (!this.mapScene) return;
         this.mapScene.removeObject(this.rtcGroup);
         this.rtcGroup = this.createRTCGroup(this.modelPosition);
         if (!this.rtcGroup) return;
@@ -209,7 +217,7 @@ export class ThreebodDOM {
     lng: number,
     lat: number,
     shouldFollow: boolean = true
-  ) {
+  ): Promise<void> {
     if (!this.mapInstance || !this.model) {
       console.error("[NAV] Carte ou modèle non initialisés");
       return;
@@ -228,7 +236,7 @@ export class ThreebodDOM {
   }
 
   // Fonction publique pour mettre à jour le follow mode
-  setFollowMode(follow: boolean) {
+  setFollowMode(follow: boolean): void {
     this.followMode = follow;
   }
 
@@ -243,13 +251,13 @@ export class ThreebodDOM {
   }
 
   // Fonction publique pour définir le callback d'arrivée
-  setOnArrivalCallback(callback: (() => void) | null) {
+  setOnArrivalCallback(callback: (() => void) | null): void {
     this.onArrivalCallback = callback;
     console.log("[NAV] Callback d'arrivée défini:", !!callback);
   }
 
   // Fonction publique pour arrêter la navigation
-  stopNavigation() {
+  stopNavigation(): void {
     if (!this.mapInstance) {
       console.error("[NAV] Carte non initialisée");
       return;
@@ -276,11 +284,11 @@ export class ThreebodDOM {
 
   // Crée une scène avec le modèle Soldier
   createSoldierScene(
-    map: any,
+    map: maplibregl.Map,
     lng: number,
     lat: number,
     options?: Partial<Model3DOptions>
-  ) {
+  ): MapScene {
     return this.createThreeScene(map, {
       modelPath: "https://threejs.org/examples/models/gltf/Soldier.glb",
       lng,

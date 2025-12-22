@@ -1,7 +1,7 @@
 import maplibregl from "maplibre-gl";
 import { POIData } from "./interfaces/dataTourismeParserInterface";
-import { CLUSTER_CONFIG } from "./utils/clusterConfig";
-import { UNCLUSTERED_POI_CONFIG } from "./utils/unclusterPoiConfig";
+import { CLUSTER_CONFIG } from "../constants/clusterConfig";
+import { UNCLUSTERED_POI_CONFIG } from "../constants/unclusterPoiConfig";
 
 // Groupe les POIs par coordonnées exactes
 function groupPOIsByCoordinates(pois: POIData[]): Map<string, POIData[]> {
@@ -21,7 +21,7 @@ function groupPOIsByCoordinates(pois: POIData[]): Map<string, POIData[]> {
 // Convertit les POIs en format GeoJSON pour MapLibre
 export function poisToGeoJSON(pois: POIData[]): GeoJSON.FeatureCollection {
   const groupedPOIs = groupPOIsByCoordinates(pois);
-  const features: any[] = [];
+  const features: GeoJSON.Feature[] = [];
 
   groupedPOIs.forEach((poisAtLocation, coordsKey) => {
     const [lng, lat] = coordsKey.split(",").map(Number);
@@ -76,7 +76,7 @@ export function poisToGeoJSON(pois: POIData[]): GeoJSON.FeatureCollection {
 export function addClusterSource(
   map: maplibregl.Map,
   initialData: POIData[] = []
-) {
+): void {
   map.addSource("pois", {
     type: "geojson",
     data: poisToGeoJSON(initialData),
@@ -87,7 +87,7 @@ export function addClusterSource(
 }
 
 // Ajoute le layer pour les clusters (cercles colorés)
-export function addClusterLayer(map: maplibregl.Map) {
+export function addClusterLayer(map: maplibregl.Map): void {
   map.addLayer({
     id: "clusters",
     type: "circle",
@@ -117,7 +117,7 @@ export function addClusterLayer(map: maplibregl.Map) {
 }
 
 // Ajoute le layer pour le compteur de POIs dans les clusters
-export function addClusterCountLayer(map: maplibregl.Map) {
+export function addClusterCountLayer(map: maplibregl.Map): void {
   map.addLayer({
     id: "cluster-count",
     type: "symbol",
@@ -135,7 +135,7 @@ export function addClusterCountLayer(map: maplibregl.Map) {
 }
 
 // Ajoute le layer pour les POIs individuels (non clusterisés)
-export function addUnclusteredPointLayer(map: maplibregl.Map) {
+export function addUnclusteredPointLayer(map: maplibregl.Map): void {
   map.addLayer({
     id: "unclustered-point",
     type: "circle",
@@ -156,7 +156,7 @@ export function addUnclusteredPointLayer(map: maplibregl.Map) {
 }
 
 // Ajoute le layer pour afficher le compteur sur les POIs groupés
-export function addPOICountLayer(map: maplibregl.Map) {
+export function addPOICountLayer(map: maplibregl.Map): void {
   map.addLayer({
     id: "poi-count",
     type: "symbol",
@@ -177,7 +177,10 @@ export function addPOICountLayer(map: maplibregl.Map) {
   });
 }
 
-export async function handleClusterClick(map: maplibregl.Map, e: any) {
+export async function handleClusterClick(
+  map: maplibregl.Map,
+  e: maplibregl.MapLayerMouseEvent
+): Promise<void> {
   const features = map.queryRenderedFeatures(e.point, {
     layers: ["clusters"],
   });
@@ -191,7 +194,10 @@ export async function handleClusterClick(map: maplibregl.Map, e: any) {
     const zoom = await source.getClusterExpansionZoom(clusterId);
 
     map.easeTo({
-      center: (features[0].geometry as any).coordinates,
+      center: (features[0].geometry as GeoJSON.Point).coordinates as [
+        number,
+        number
+      ],
       zoom,
     });
   } catch (err) {
@@ -201,10 +207,10 @@ export async function handleClusterClick(map: maplibregl.Map, e: any) {
 
 export function handleUnclusteredPointClick(
   map: maplibregl.Map,
-  e: any,
+  e: maplibregl.MapLayerMouseEvent,
   onPOIClick?: (poi: POIData, coordinates: [number, number]) => void,
   onPOIGroupClick?: (pois: POIData[], coordinates: [number, number]) => void
-) {
+): void {
   if (!e.features || !e.features.length) return;
 
   e.preventDefault();
@@ -212,7 +218,9 @@ export function handleUnclusteredPointClick(
     e.originalEvent.stopPropagation();
   }
 
-  const coordinates = (e.features[0].geometry as any).coordinates.slice();
+  const coordinates = (
+    e.features![0].geometry as GeoJSON.Point
+  ).coordinates.slice() as [number, number];
   const properties = e.features[0].properties;
 
   // Vérifier si c'est un POI groupé
@@ -232,30 +240,13 @@ export function handleUnclusteredPointClick(
   }
 }
 
-// Configure les curseurs au survol des clusters et POIs
-/* export function setupCursorHandlers(map: maplibregl.Map) {
-  map.on("mouseenter", "clusters", () => {
-    map.getCanvas().style.cursor = "pointer";
-  });
-  map.on("mouseleave", "clusters", () => {
-    map.getCanvas().style.cursor = "";
-  });
-  map.on("mouseenter", "unclustered-point", () => {
-    map.getCanvas().style.cursor = "pointer";
-  });
-  map.on("mouseleave", "unclustered-point", () => {
-    map.getCanvas().style.cursor = "";
-  });
-}
- */
-
 // Initialise le système de clustering sur la carte
 export function initializeClustering(
   map: maplibregl.Map,
   initialData: POIData[] = [],
   onPOIClick?: (poi: POIData, coordinates: [number, number]) => void,
   onPOIGroupClick?: (pois: POIData[], coordinates: [number, number]) => void
-) {
+): void {
   addClusterSource(map, initialData);
   addClusterLayer(map);
   addClusterCountLayer(map);
@@ -269,7 +260,7 @@ export function initializeClustering(
   //setupCursorHandlers(map);
 }
 
-export function updateClusterData(map: maplibregl.Map, pois: POIData[]) {
+export function updateClusterData(map: maplibregl.Map, pois: POIData[]): void {
   const source = map.getSource("pois") as maplibregl.GeoJSONSource;
   if (source) {
     source.setData(poisToGeoJSON(pois));

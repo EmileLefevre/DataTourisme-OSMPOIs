@@ -41,7 +41,10 @@ export class Navigation {
   }
 
   // Afficher la route sur la carte
-  displayRoute(map: maplibregl.Map, routeCoordinates: [number, number][]) {
+  displayRoute(
+    map: maplibregl.Map,
+    routeCoordinates: [number, number][]
+  ): void {
     if (!routeCoordinates || routeCoordinates.length < 2) {
       // Supprimer la route si pas de coordonnées
       if (map.getSource("route")) {
@@ -106,7 +109,10 @@ export class Navigation {
   }
 
   // Mettre à jour la route restante
-  updateRemainingRoute(map: maplibregl.Map, modelPosition: [number, number]) {
+  updateRemainingRoute(
+    map: maplibregl.Map,
+    modelPosition: [number, number]
+  ): void {
     if (this.fullRoute.length > 0 && this.routeQueue.length > 0) {
       const remainingRoute = [modelPosition, ...this.routeQueue];
       this.displayRoute(map, remainingRoute);

@@ -60,7 +60,7 @@ export default function MapLibreDOM({
   }, [shouldRemoveRoute, onRouteRemoved]);
 
   const handlePOIClick = useCallback(
-    (poi: POIData, _coordinates: [number, number]) => {
+    (poi: POIData, _coordinates: [number, number]): void => {
       if (
         currentTrekIdRef.current &&
         currentTrekIdRef.current !== poi.id &&
@@ -84,14 +84,14 @@ export default function MapLibreDOM({
   );
 
   const handlePOIGroupClick = useCallback(
-    (pois: POIData[], _coordinates: [number, number]) => {
+    (pois: POIData[], _coordinates: [number, number]): void => {
       onPOIGroupClick?.(pois);
     },
     [onPOIGroupClick]
   );
 
   useEffect(() => {
-    const loadPOIs = async () => {
+    const loadPOIs = async (): Promise<void> => {
       setIsLoading(true);
       try {
         const stats = await getPOIStats();
@@ -140,7 +140,7 @@ export default function MapLibreDOM({
     mapInstance.current.on("load", () => {
       setMapLoaded(true);
       const map = mapInstance.current;
-      if (!map) return;
+      if (!map) return null;
 
       map
         .getStyle()
@@ -152,6 +152,9 @@ export default function MapLibreDOM({
           `Position du modele 3D : lng=${centerLng}, lat=${centerLat}`
         );
 
+        if (!mapInstance.current) {
+          return null;
+        }
         model3DService.createSoldierScene(
           mapInstance.current,
           centerLng,
@@ -165,13 +168,13 @@ export default function MapLibreDOM({
         console.error("Erreur lors de la création de la scène 3D:", error);
       }
 
-      const updateBuildingsVisibility = () => {
+      const updateBuildingsVisibility = (): void => {
         const currentZoom = map.getZoom();
         const layers = map.getStyle().layers;
         const shouldHideBuildings =
           currentZoom >= MAP_CONFIG.BUILDINGS.HIDE_ZOOM_THRESHOLD;
 
-        layers.forEach((layer: any) => {
+        layers.forEach((layer: maplibregl.LayerSpecification): void => {
           if (layer.type === "fill-extrusion") {
             const visibility = shouldHideBuildings ? "none" : "visible";
             map.setLayoutProperty(layer.id, "visibility", visibility);
@@ -204,7 +207,7 @@ export default function MapLibreDOM({
             });
           isPlacementMode.current = false;
           setIsPlacementModeUI(false);
-          return;
+          return null;
         }
         const features = map.queryRenderedFeatures(e.point, {
           layers: ["unclustered-point", "clusters"],

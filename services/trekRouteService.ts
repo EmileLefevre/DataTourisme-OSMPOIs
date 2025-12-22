@@ -110,7 +110,7 @@ export function displayTrekRoute(
   map: maplibregl.Map,
   poi: POIData,
   onMarkerClick?: (poi: POIData) => void
-) {
+): void {
   removeTrekRoute(map);
 
   const routeCoords = extractRouteCoordinates(poi);
